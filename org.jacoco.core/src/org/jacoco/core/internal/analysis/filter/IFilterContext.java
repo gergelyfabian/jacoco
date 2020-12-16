@@ -29,6 +29,11 @@ public interface IFilterContext {
 	String getSuperClassName();
 
 	/**
+	 * @return vm names of the implemented interfaces
+	 */
+	Set<String> getInterfaceNames();
+
+	/**
 	 * @return vm names of the class annotations of the enclosing class
 	 */
 	Set<String> getClassAnnotations();

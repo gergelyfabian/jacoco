@@ -11,6 +11,7 @@
  *******************************************************************************/
 package org.jacoco.core.internal.analysis;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -148,6 +149,10 @@ public class ClassAnalyzer extends ClassProbesVisitor
 
 	public String getSuperClassName() {
 		return coverage.getSuperName();
+	}
+
+	public Set<String> getInterfaceNames() {
+		return new HashSet<String>(Arrays.asList(coverage.getInterfaceNames()));
 	}
 
 	public Set<String> getClassAnnotations() {

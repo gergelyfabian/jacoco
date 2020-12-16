@@ -21,6 +21,7 @@ public class FilterContextMock implements IFilterContext {
 
 	public String className = "Foo";
 	public String superClassName = "java/lang/Object";
+	public Set<String> interfaceNames = new HashSet<String>();
 	public Set<String> classAnnotations = new HashSet<String>();
 	public Set<String> classAttributes = new HashSet<String>();
 	public String sourceFileName = "Foo.java";
@@ -32,6 +33,10 @@ public class FilterContextMock implements IFilterContext {
 
 	public String getSuperClassName() {
 		return superClassName;
+	}
+
+	public Set<String> getInterfaceNames() {
+		return interfaceNames;
 	}
 
 	public Set<String> getClassAnnotations() {
