@@ -136,6 +136,8 @@
         <module>../org.jacoco.core.test.validation.java7</module>
         <module>../org.jacoco.core.test.validation.java8</module>
         <module>../org.jacoco.core.test.validation.groovy</module>
+        <module>../org.jacoco.core.test.validation.scala2_11</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
         <module>../org.jacoco.core.test.validation.scala</module>
       </modules>
     </profile>
@@ -176,6 +178,8 @@
         <module>../org.jacoco.core.test.validation.java8</module>
         <module>../org.jacoco.core.test.validation.groovy</module>
         <module>../org.jacoco.core.test.validation.scala</module>
+        <module>../org.jacoco.core.test.validation.scala2_11</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
       </modules>
     </profile>
 
@@ -196,6 +200,7 @@
         <module>../org.jacoco.core.test.validation.java8</module>
         <module>../org.jacoco.core.test.validation.groovy</module>
         <module>../org.jacoco.core.test.validation.scala</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
       </modules>
     </profile>
 
@@ -221,6 +226,7 @@
         <module>../org.jacoco.core.test.validation.groovy</module>
         -->
         <module>../org.jacoco.core.test.validation.scala</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
       </modules>
     </profile>
 
@@ -246,6 +252,7 @@
         <module>../org.jacoco.core.test.validation.groovy</module>
         -->
         <module>../org.jacoco.core.test.validation.scala</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
       </modules>
     </profile>
 
@@ -268,9 +275,11 @@
         <module>../org.jacoco.core.test.validation.java8</module>
         <module>../org.jacoco.core.test.validation.java14</module>
         <!-- Groovy 2.5.8 doesn't support bytecode version 16
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
         <module>../org.jacoco.core.test.validation.groovy</module>
         -->
         <module>../org.jacoco.core.test.validation.scala</module>
+        <module>../org.jacoco.core.test.validation.scala2_12</module>
       </modules>
     </profile>
   </profiles>
