@@ -86,7 +86,7 @@ public class DumpTest extends CommandTestBase {
 		} catch (IOException ignore) {
 		}
 
-		assertContains("[WARN] Connection refused", err);
+		assertContains("Connection refused", err);
 	}
 
 	private int startMockServer() throws IOException {
