@@ -49,6 +49,7 @@ public final class Filters implements IFilter {
 				new KotlinCoroutineFilter(), new KotlinDefaultMethodsFilter(),
 				new ScalaClassGeneratedMethodsFilter(),
 				new ScalaCaseClassGeneratedMethodsFilter(),
+				new ScalaLazyInitializerFilter(),
 				new ScalaLambdaGeneratedMethodsFilter());
 	}
 
