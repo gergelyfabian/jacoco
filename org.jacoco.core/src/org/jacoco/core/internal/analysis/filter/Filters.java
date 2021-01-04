@@ -48,7 +48,8 @@ public final class Filters implements IFilter {
 				new ScalaClassGeneratedMethodsFilter(),
 				new ScalaCaseClassGeneratedMethodsFilter(),
 				new ScalaLazyInitializerFilter(),
-				new ScalaLambdaGeneratedMethodsFilter());
+				new ScalaLambdaGeneratedMethodsFilter(),
+				new ScalaMatchFilter());
 	}
 
 	private Filters(final IFilter... filters) {
