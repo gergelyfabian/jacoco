@@ -49,8 +49,8 @@ public final class Filters implements IFilter {
 				new ScalaCaseClassGeneratedMethodsFilter(),
 				new ScalaLazyInitializerFilter(),
 				new ScalaLambdaGeneratedMethodsFilter(), new ScalaMatchFilter(),
-				new ScalaLoggingMacroFilter(),
-				new ScalaPartialFunctionFilter());
+				new ScalaLoggingMacroFilter(), new ScalaPartialFunctionFilter(),
+				new ScalaPureConfigFilter());
 	}
 
 	private Filters(final IFilter... filters) {
