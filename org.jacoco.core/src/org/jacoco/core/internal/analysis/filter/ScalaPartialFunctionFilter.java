@@ -14,8 +14,13 @@ package org.jacoco.core.internal.analysis.filter;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Filters methods that Scala compiler generates for case classes.
@@ -35,8 +40,11 @@ public final class ScalaPartialFunctionFilter implements IFilter {
 
 		final Matcher matcher = new Matcher();
 
-		matcher.applyOrElse(methodNode, output);
-		matcher.isDefinedAt(methodNode, output);
+		for (AbstractInsnNode i = methodNode.instructions
+				.getFirst(); i != null; i = i.getNext()) {
+			matcher.match(methodNode, i, output);
+		}
+
 		matcher.cutInit(methodNode, output);
 	}
 
@@ -50,66 +58,100 @@ public final class ScalaPartialFunctionFilter implements IFilter {
 			cursor = null;
 		}
 
-		void applyOrElse(final MethodNode m, final IFilterOutput output) {
-			if (!"applyOrElse".equals(m.name)) {
+		void match(final MethodNode m, final AbstractInsnNode start,
+				final IFilterOutput output) {
+			if (start.getType() != InsnNode.LABEL) {
 				return;
 			}
-			firstIs(m, Opcodes.ALOAD);
-			nextIs(Opcodes.ASTORE);
-			nextIs(Opcodes.ALOAD);
-			nextIs(Opcodes.IFNULL);
+			cursor = start;
+			AbstractInsnNode lastLabel = start;
+			AbstractInsnNode lastJump = null;
 
-			if (cursor == null) {
-				return;
-			}
-
-			AbstractInsnNode ifpos = cursor;
-
-			cursor = ((JumpInsnNode) ifpos).label;
-			AbstractInsnNode cutStart = cursor;
+			// Default for applyOrElse
 			nextIs(Opcodes.ALOAD);
 			nextIs(Opcodes.ALOAD);
 			nextIsInvoke(Opcodes.INVOKEINTERFACE, "scala/Function1", "apply",
 					"(Ljava/lang/Object;)Ljava/lang/Object;");
 			nextIs(Opcodes.ASTORE);
+			nextIs(Opcodes.ALOAD);
+			nextIs(Opcodes.ARETURN);
+
+			if (cursor == null) {
+				// Default for isDefinedAt
+				cursor = start;
+				nextIs(Opcodes.ICONST_0);
+				nextIs(Opcodes.ISTORE);
+				nextIs(Opcodes.ILOAD);
+				nextIs(Opcodes.IRETURN);
+			}
+
 			if (cursor == null) {
 				return;
 			}
-			AbstractInsnNode cutEnd = cursor;
+			output.ignore(start, cursor);
 
-			// Cut out both the if (that goes to the MatchError) and the code
-			// that throws the MatchError.
-			output.ignore(ifpos, ifpos);
-			output.ignore(cutStart, cutEnd);
+			final Set<AbstractInsnNode> newTargetsForFirstIf = new HashSet<AbstractInsnNode>();
+
+			// Start from the current cursor (end of partial function) and
+			// search 'if's backwards.
+			for (AbstractInsnNode i = start; i != null
+					&& lastLabel != null; i = i.getPrevious()) {
+				if (i.getOpcode() == Opcodes.IFEQ) {
+					if (((JumpInsnNode) i).label == start) {
+						// Ignore last case.
+						output.ignore(i, i);
+
+						// The first 'if' should have a new branch for the else
+						// case of this one.
+						newTargetsForFirstIf.add(
+								AbstractMatcher.skipNonOpcodes(i.getNext()));
+
+						// Save references to the "last" if and label we have
+						// seen (going backwards).
+						lastJump = i;
+						lastLabel = findLastLabel(i);
+					} else if (((JumpInsnNode) i).label == lastLabel) {
+						// Ignore the branch for all ifs but the last.
+						ignoreBranch(i, output);
+
+						// The first 'if' should have a new branch for the else
+						// case of this one.
+						newTargetsForFirstIf.add(
+								AbstractMatcher.skipNonOpcodes(i.getNext()));
+
+						// Save references to the "last" if and label we have
+						// seen (going backwards).
+						lastJump = i;
+						lastLabel = findLastLabel(i);
+					}
+				}
+			}
+
+			// The last jump we found (the first if) should receive all branches
+			// that we found.
+			if (lastJump != null && !"isDefinedAt".equals(m.name)) {
+				output.replaceBranches(lastJump, newTargetsForFirstIf);
+			}
 		}
 
-		void isDefinedAt(final MethodNode m, final IFilterOutput output) {
-			if (!"isDefinedAt".equals(m.name)) {
-				return;
+		private static AbstractInsnNode findLastLabel(
+				final AbstractInsnNode jumpNode) {
+			for (AbstractInsnNode i = jumpNode; i != null; i = i
+					.getPrevious()) {
+				if (i.getType() == InsnNode.LABEL) {
+					return i;
+				}
 			}
-			firstIs(m, Opcodes.ALOAD);
-			nextIs(Opcodes.ASTORE);
-			nextIs(Opcodes.ALOAD);
-			nextIs(Opcodes.IFNULL);
-			if (cursor == null) {
-				return;
-			}
+			return null;
+		}
 
-			AbstractInsnNode ifpos = cursor;
-
-			cursor = ((JumpInsnNode) ifpos).label;
-			AbstractInsnNode cutStart = cursor;
-			nextIs(Opcodes.ICONST_0);
-			nextIs(Opcodes.ISTORE);
-			if (cursor == null) {
-				return;
-			}
-			AbstractInsnNode cutEnd = cursor;
-
-			// Cut out both the if (that goes to the MatchError) and the code
-			// that throws the MatchError.
-			output.ignore(ifpos, ifpos);
-			output.ignore(cutStart, cutEnd);
+		private static void ignoreBranch(final AbstractInsnNode jumpNode,
+				final IFilterOutput output) {
+			final LabelNode label;
+			label = ((JumpInsnNode) jumpNode).label;
+			final Set<AbstractInsnNode> newTargets = new HashSet<AbstractInsnNode>();
+			newTargets.add(AbstractMatcher.skipNonOpcodes(label));
+			output.replaceBranches(jumpNode, newTargets);
 		}
 
 		void cutInit(final MethodNode m, final IFilterOutput output) {

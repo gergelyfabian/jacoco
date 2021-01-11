@@ -33,6 +33,20 @@ object ScalaPartialFunctionTarget {
     }
     System.out.println(found)
 
+    List("int", "char", "text", "something").collect(mapping) // assertFullyCovered()
+  }
+
+  def mapping: PartialFunction[String, Int] = { // assertPartlyCovered()
+    case "int" => // assertPartlyCovered(2,3)
+      1 // assertPartlyCovered()
+    case "char" => // assertPartlyCovered()
+      2 // assertPartlyCovered()
+    case "text" => // assertPartlyCovered()
+      3 // assertPartlyCovered()
+    case "foo" => // assertPartlyCovered()
+      4 // assertNotCovered()
+    case "foo" => // assertEmpty()
+      5 // assertNotCovered()
   }
 
 }
