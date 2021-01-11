@@ -76,6 +76,11 @@ public abstract class FilterTestBase {
 				replacedBranches);
 	}
 
+	final void assertReplacedBranches(
+			final Map<AbstractInsnNode, Set<AbstractInsnNode>> expectedReplacedBranches) {
+		assertEquals(expectedReplacedBranches, replacedBranches);
+	}
+
 	static class Range {
 		AbstractInsnNode fromInclusive;
 		AbstractInsnNode toInclusive;

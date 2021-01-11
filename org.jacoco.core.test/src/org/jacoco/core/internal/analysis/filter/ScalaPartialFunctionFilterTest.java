@@ -15,7 +15,13 @@ import org.jacoco.core.internal.instr.InstrSupport;
 import org.junit.Test;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Unit tests for {@link SyntheticFilter}.
@@ -57,37 +63,77 @@ public class ScalaPartialFunctionFilterTest extends FilterTestBase {
 		context.classAttributes.add("Scala");
 		context.superClassName = "scala/runtime/AbstractPartialFunction";
 
-		final Label label = new Label();
+		final Label label1 = new Label();
+		final Label label2 = new Label();
+		final Label label3 = new Label();
 
 		final Range range1 = new Range();
 		final Range range2 = new Range();
 
-		m.visitVarInsn(Opcodes.ALOAD, 1);
-		m.visitVarInsn(Opcodes.ASTORE, 3);
-		m.visitVarInsn(Opcodes.ALOAD, 3);
-		m.visitJumpInsn(Opcodes.IFNULL, label);
-		range1.fromInclusive = m.instructions.getLast();
-		range1.toInclusive = m.instructions.getLast();
+		Map<AbstractInsnNode, Set<AbstractInsnNode>> expectedReplacedBranches = new HashMap<AbstractInsnNode, Set<AbstractInsnNode>>();
+
+		// Simulate three jumps.
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label1);
+		AbstractInsnNode firstIf = m.instructions.getLast();
 
 		m.visitInsn(Opcodes.NOP);
-		// And a lot of other instructions...
-		m.visitLabel(label);
+		AbstractInsnNode afterFirstIf = m.instructions.getLast();
 
-		range2.fromInclusive = m.instructions.getLast();
+		m.visitLabel(label1);
+
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label2);
+		AbstractInsnNode secondIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterSecondIf = m.instructions.getLast();
+
+		m.visitLabel(label2);
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode firstInstrAfterSecondLabel = m.instructions.getLast();
+		m.visitJumpInsn(Opcodes.IFEQ, label3);
+		AbstractInsnNode thirdIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterThirdIf = m.instructions.getLast();
+
+		m.visitLabel(label3);
+		AbstractInsnNode thirdLabel = m.instructions.getLast();
+
+		range2.fromInclusive = thirdLabel;
 		m.visitVarInsn(Opcodes.ALOAD, 2);
 		m.visitVarInsn(Opcodes.ALOAD, 1);
 		m.visitMethodInsn(Opcodes.INVOKEINTERFACE, "scala/Function1", "apply",
 				"(Ljava/lang/Object;)Ljava/lang/Object;", false);
 		m.visitInsn(Opcodes.ASTORE);
-		range2.toInclusive = m.instructions.getLast();
-
 		m.visitInsn(Opcodes.ALOAD);
 		m.visitInsn(Opcodes.ARETURN);
+		range2.toInclusive = m.instructions.getLast();
 
 		filter.filter(m, context, output);
 
-		assertIgnored(range1, range2);
-		assertNoReplacedBranches();
+		// For the first 'if' we add branches to the instructions right after
+		// all 'if's.
+		final Set<AbstractInsnNode> firstIfNewTargets = new HashSet<AbstractInsnNode>();
+		firstIfNewTargets.add(afterFirstIf);
+		firstIfNewTargets.add(afterSecondIf);
+		firstIfNewTargets.add(afterThirdIf);
+		expectedReplacedBranches.put(firstIf, firstIfNewTargets);
+
+		// For any "middle" 'if's (the second one in our case) we switch
+		// branches to the corresponding label.
+		final Set<AbstractInsnNode> secondIfNewTargets = new HashSet<AbstractInsnNode>();
+		secondIfNewTargets.add(firstInstrAfterSecondLabel);
+		expectedReplacedBranches.put(secondIf, secondIfNewTargets);
+
+		// The last if is ignored, there is no branch replacement there.
+		range1.fromInclusive = thirdIf;
+		range1.toInclusive = thirdIf;
+
+		assertIgnored(range2, range1);
+		assertReplacedBranches(expectedReplacedBranches);
 	}
 
 	@Test
@@ -97,33 +143,70 @@ public class ScalaPartialFunctionFilterTest extends FilterTestBase {
 		context.classAttributes.add("Scala");
 		context.superClassName = "scala/runtime/AbstractPartialFunction";
 
-		final Label label = new Label();
+		final Label label1 = new Label();
+		final Label label2 = new Label();
+		final Label label3 = new Label();
 
 		final Range range1 = new Range();
 		final Range range2 = new Range();
 
-		m.visitVarInsn(Opcodes.ALOAD, 1);
-		m.visitVarInsn(Opcodes.ASTORE, 2);
-		m.visitVarInsn(Opcodes.ALOAD, 2);
-		m.visitJumpInsn(Opcodes.IFNULL, label);
-		range1.fromInclusive = m.instructions.getLast();
-		range1.toInclusive = m.instructions.getLast();
+		Map<AbstractInsnNode, Set<AbstractInsnNode>> expectedReplacedBranches = new HashMap<AbstractInsnNode, Set<AbstractInsnNode>>();
+
+		// Simulate three jumps.
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label1);
+		AbstractInsnNode firstIf = m.instructions.getLast();
 
 		m.visitInsn(Opcodes.NOP);
-		// And a lot of other instructions...
-		m.visitLabel(label);
+		AbstractInsnNode afterFirstIf = m.instructions.getLast();
 
-		range2.fromInclusive = m.instructions.getLast();
+		m.visitLabel(label1);
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode firstInstrAfterFirstLabel = m.instructions.getLast();
+		m.visitJumpInsn(Opcodes.IFEQ, label2);
+		AbstractInsnNode secondIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterSecondIf = m.instructions.getLast();
+
+		m.visitLabel(label2);
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode firstInstrAfterSecondLabel = m.instructions.getLast();
+		m.visitJumpInsn(Opcodes.IFEQ, label3);
+		AbstractInsnNode thirdIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterThirdIf = m.instructions.getLast();
+
+		m.visitLabel(label3);
+		AbstractInsnNode thirdLabel = m.instructions.getLast();
+
+		range2.fromInclusive = thirdLabel;
 		m.visitInsn(Opcodes.ICONST_0);
-		m.visitVarInsn(Opcodes.ISTORE, 3);
+		m.visitInsn(Opcodes.ISTORE);
+		m.visitInsn(Opcodes.ILOAD);
+		m.visitInsn(Opcodes.IRETURN);
 		range2.toInclusive = m.instructions.getLast();
-
-		m.visitInsn(Opcodes.NOP);
 
 		filter.filter(m, context, output);
 
-		assertIgnored(range1, range2);
-		assertNoReplacedBranches();
+		// For all but the last 'if's we add branches to the instructions right
+		// after the 'if's.
+		final Set<AbstractInsnNode> firstIfNewTargets = new HashSet<AbstractInsnNode>();
+		firstIfNewTargets.add(firstInstrAfterFirstLabel);
+		expectedReplacedBranches.put(firstIf, firstIfNewTargets);
+		final Set<AbstractInsnNode> secondIfNewTargets = new HashSet<AbstractInsnNode>();
+		secondIfNewTargets.add(firstInstrAfterSecondLabel);
+		expectedReplacedBranches.put(secondIf, secondIfNewTargets);
+
+		// The last if is ignored, there is no branch replacement there.
+		range1.fromInclusive = thirdIf;
+		range1.toInclusive = thirdIf;
+
+		assertIgnored(range2, range1);
+		assertReplacedBranches(expectedReplacedBranches);
 	}
 
 	@Test
