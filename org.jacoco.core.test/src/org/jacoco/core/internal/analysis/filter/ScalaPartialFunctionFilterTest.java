@@ -138,6 +138,102 @@ public class ScalaPartialFunctionFilterTest extends FilterTestBase {
 	}
 
 	@Test
+	public void testScalaApplyOrElseScala212() {
+		final MethodNode m = new MethodNode(InstrSupport.ASM_API_VERSION, 0,
+				"applyOrElse",
+				"(Ljava/lang/Throwable;Lscala/Function1;)Ljava/lang/Object;",
+				null, null);
+		context.classAttributes.add("Scala");
+		context.superClassName = "scala/runtime/AbstractPartialFunction";
+
+		final Label label1 = new Label();
+		final Label label1goto = new Label();
+		final Label label2 = new Label();
+		final Label label2goto = new Label();
+		final Label label3 = new Label();
+		final Label label3goto = new Label();
+
+		final Range range1 = new Range();
+		final Range range2 = new Range();
+
+		Map<AbstractInsnNode, Set<AbstractInsnNode>> expectedReplacedBranches = new HashMap<AbstractInsnNode, Set<AbstractInsnNode>>();
+
+		// Simulate three jumps.
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label1goto);
+		AbstractInsnNode firstIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterFirstIf = m.instructions.getLast();
+
+		m.visitLabel(label1goto);
+		m.visitJumpInsn(Opcodes.GOTO, label1);
+
+		m.visitLabel(label1);
+
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label2goto);
+		AbstractInsnNode secondIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterSecondIf = m.instructions.getLast();
+
+		m.visitLabel(label2goto);
+		m.visitJumpInsn(Opcodes.GOTO, label2);
+		AbstractInsnNode firstInstrAfterSecondLabel = m.instructions.getLast();
+
+		m.visitLabel(label2);
+
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label3goto);
+		AbstractInsnNode thirdIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterThirdIf = m.instructions.getLast();
+
+		m.visitLabel(label3goto);
+		m.visitJumpInsn(Opcodes.GOTO, label3);
+
+		m.visitLabel(label3);
+		AbstractInsnNode thirdLabel = m.instructions.getLast();
+
+		range2.fromInclusive = thirdLabel;
+		m.visitInsn(Opcodes.GOTO);
+		m.visitVarInsn(Opcodes.ALOAD, 2);
+		m.visitVarInsn(Opcodes.ALOAD, 1);
+		m.visitMethodInsn(Opcodes.INVOKEINTERFACE, "scala/Function1", "apply",
+				"(Ljava/lang/Object;)Ljava/lang/Object;", false);
+		m.visitInsn(Opcodes.ASTORE);
+		m.visitInsn(Opcodes.GOTO);
+		m.visitInsn(Opcodes.ALOAD);
+		m.visitInsn(Opcodes.ARETURN);
+		range2.toInclusive = m.instructions.getLast();
+
+		filter.filter(m, context, output);
+
+		// For the first 'if' we add branches to the instructions right after
+		// all 'if's.
+		final Set<AbstractInsnNode> firstIfNewTargets = new HashSet<AbstractInsnNode>();
+		firstIfNewTargets.add(afterFirstIf);
+		firstIfNewTargets.add(afterSecondIf);
+		firstIfNewTargets.add(afterThirdIf);
+		expectedReplacedBranches.put(firstIf, firstIfNewTargets);
+
+		// For any "middle" 'if's (the second one in our case) we switch
+		// branches to the corresponding label.
+		final Set<AbstractInsnNode> secondIfNewTargets = new HashSet<AbstractInsnNode>();
+		secondIfNewTargets.add(firstInstrAfterSecondLabel);
+		expectedReplacedBranches.put(secondIf, secondIfNewTargets);
+
+		// The last if is ignored, there is no branch replacement there.
+		range1.fromInclusive = thirdIf;
+		range1.toInclusive = thirdIf;
+
+		assertIgnored(range2, range1);
+		assertReplacedBranches(expectedReplacedBranches);
+	}
+
+	@Test
 	public void testScalaIsDefinedAt() {
 		final MethodNode m = new MethodNode(InstrSupport.ASM_API_VERSION, 0,
 				"isDefinedAt", "(Ljava/lang/Throwable;)Z", null, null);
@@ -187,6 +283,94 @@ public class ScalaPartialFunctionFilterTest extends FilterTestBase {
 		range2.fromInclusive = thirdLabel;
 		m.visitInsn(Opcodes.ICONST_0);
 		m.visitInsn(Opcodes.ISTORE);
+		m.visitInsn(Opcodes.ILOAD);
+		m.visitInsn(Opcodes.IRETURN);
+		range2.toInclusive = m.instructions.getLast();
+
+		filter.filter(m, context, output);
+
+		// For all but the last 'if's we add branches to the instructions right
+		// after the 'if's.
+		final Set<AbstractInsnNode> firstIfNewTargets = new HashSet<AbstractInsnNode>();
+		firstIfNewTargets.add(firstInstrAfterFirstLabel);
+		expectedReplacedBranches.put(firstIf, firstIfNewTargets);
+		final Set<AbstractInsnNode> secondIfNewTargets = new HashSet<AbstractInsnNode>();
+		secondIfNewTargets.add(firstInstrAfterSecondLabel);
+		expectedReplacedBranches.put(secondIf, secondIfNewTargets);
+
+		// The last if is ignored, there is no branch replacement there.
+		range1.fromInclusive = thirdIf;
+		range1.toInclusive = thirdIf;
+
+		assertIgnored(range2, range1);
+		assertReplacedBranches(expectedReplacedBranches);
+	}
+
+	@Test
+	public void testScalaIsDefinedAt212() {
+		final MethodNode m = new MethodNode(InstrSupport.ASM_API_VERSION, 0,
+				"isDefinedAt", "(Ljava/lang/Throwable;)Z", null, null);
+		context.classAttributes.add("Scala");
+		context.superClassName = "scala/runtime/AbstractPartialFunction";
+
+		final Label label1 = new Label();
+		final Label label1goto = new Label();
+		final Label label2 = new Label();
+		final Label label2goto = new Label();
+		final Label label3 = new Label();
+		final Label label3goto = new Label();
+
+		final Range range1 = new Range();
+		final Range range2 = new Range();
+
+		Map<AbstractInsnNode, Set<AbstractInsnNode>> expectedReplacedBranches = new HashMap<AbstractInsnNode, Set<AbstractInsnNode>>();
+
+		// Simulate three jumps.
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label1goto);
+		AbstractInsnNode firstIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterFirstIf = m.instructions.getLast();
+
+		m.visitLabel(label1goto);
+		m.visitJumpInsn(Opcodes.GOTO, label1);
+		AbstractInsnNode firstInstrAfterFirstLabel = m.instructions.getLast();
+
+		m.visitLabel(label1);
+
+		m.visitInsn(Opcodes.NOP);
+		m.visitJumpInsn(Opcodes.IFEQ, label2goto);
+		AbstractInsnNode secondIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterSecondIf = m.instructions.getLast();
+
+		m.visitLabel(label2goto);
+		m.visitJumpInsn(Opcodes.GOTO, label2);
+		AbstractInsnNode firstInstrAfterSecondLabel = m.instructions.getLast();
+
+		m.visitLabel(label2);
+
+		m.visitInsn(Opcodes.NOP);
+
+		m.visitJumpInsn(Opcodes.IFEQ, label3goto);
+		AbstractInsnNode thirdIf = m.instructions.getLast();
+
+		m.visitInsn(Opcodes.NOP);
+		AbstractInsnNode afterThirdIf = m.instructions.getLast();
+
+		m.visitLabel(label3goto);
+		m.visitJumpInsn(Opcodes.GOTO, label3);
+
+		m.visitLabel(label3);
+		AbstractInsnNode thirdLabel = m.instructions.getLast();
+
+		range2.fromInclusive = thirdLabel;
+		m.visitInsn(Opcodes.GOTO);
+		m.visitInsn(Opcodes.ICONST_0);
+		m.visitInsn(Opcodes.ISTORE);
+		m.visitInsn(Opcodes.GOTO);
 		m.visitInsn(Opcodes.ILOAD);
 		m.visitInsn(Opcodes.IRETURN);
 		range2.toInclusive = m.instructions.getLast();
