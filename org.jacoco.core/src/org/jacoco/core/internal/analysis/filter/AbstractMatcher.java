@@ -95,6 +95,25 @@ abstract class AbstractMatcher {
 		cursor = null;
 	}
 
+	/**
+	 * Moves {@link #cursor} to next instruction if it is {@link MethodInsnNode}
+	 * with given opcode, owner, name and descriptor, otherwise sets it to
+	 * <code>null</code>.
+	 */
+	final void nextIsInvoke(final int opcode, final String owner,
+							final String name, final String descriptor) {
+		nextIs(opcode);
+		if (cursor == null) {
+			return;
+		}
+		final MethodInsnNode m = (MethodInsnNode) cursor;
+		if (owner.equals(m.owner) && name.equals(m.name)
+				&& descriptor.equals(m.desc)) {
+			return;
+		}
+		cursor = null;
+	}
+
 	final void nextIsVar(final int opcode, final String name) {
 		nextIs(opcode);
 		if (cursor == null) {

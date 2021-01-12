@@ -25,9 +25,6 @@
 
   <properties>
     <bytecode.version>6</bytecode.version>
-  </properties>
-
-  <properties>
     <scala.version>2.13.4</scala.version>
   </properties>
 
