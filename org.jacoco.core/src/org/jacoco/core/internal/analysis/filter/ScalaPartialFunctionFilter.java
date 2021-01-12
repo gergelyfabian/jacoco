@@ -68,19 +68,39 @@ public final class ScalaPartialFunctionFilter implements IFilter {
 			AbstractInsnNode lastJump = null;
 
 			// Default for applyOrElse
+			next();
+			// Ignore a single goto.
+			if (cursor != null && cursor.getOpcode() != Opcodes.GOTO) {
+				cursor = cursor.getPrevious();
+			}
 			nextIs(Opcodes.ALOAD);
 			nextIs(Opcodes.ALOAD);
 			nextIsInvoke(Opcodes.INVOKEINTERFACE, "scala/Function1", "apply",
 					"(Ljava/lang/Object;)Ljava/lang/Object;");
 			nextIs(Opcodes.ASTORE);
+			next();
+			// Ignore a single goto.
+			if (cursor != null && cursor.getOpcode() != Opcodes.GOTO) {
+				cursor = cursor.getPrevious();
+			}
 			nextIs(Opcodes.ALOAD);
 			nextIs(Opcodes.ARETURN);
 
 			if (cursor == null) {
 				// Default for isDefinedAt
 				cursor = start;
+				next();
+				// Ignore a single goto.
+				if (cursor != null && cursor.getOpcode() != Opcodes.GOTO) {
+					cursor = cursor.getPrevious();
+				}
 				nextIs(Opcodes.ICONST_0);
 				nextIs(Opcodes.ISTORE);
+				next();
+				// Ignore a single goto.
+				if (cursor != null && cursor.getOpcode() != Opcodes.GOTO) {
+					cursor = cursor.getPrevious();
+				}
 				nextIs(Opcodes.ILOAD);
 				nextIs(Opcodes.IRETURN);
 			}
@@ -97,7 +117,14 @@ public final class ScalaPartialFunctionFilter implements IFilter {
 			for (AbstractInsnNode i = start; i != null
 					&& lastLabel != null; i = i.getPrevious()) {
 				if (i.getOpcode() == Opcodes.IFEQ) {
-					if (((JumpInsnNode) i).label == start) {
+					LabelNode directJump = ((JumpInsnNode) i).label;
+					AbstractInsnNode jumpNode = AbstractMatcher
+							.skipNonOpcodes(((JumpInsnNode) i).label);
+					LabelNode indirectJump = null;
+					if (jumpNode.getOpcode() == Opcodes.GOTO) {
+						indirectJump = ((JumpInsnNode) jumpNode).label;
+					}
+					if (directJump == start || indirectJump == start) {
 						// Ignore last case.
 						output.ignore(i, i);
 
@@ -110,7 +137,8 @@ public final class ScalaPartialFunctionFilter implements IFilter {
 						// seen (going backwards).
 						lastJump = i;
 						lastLabel = findLastLabel(i);
-					} else if (((JumpInsnNode) i).label == lastLabel) {
+					} else if (directJump == lastLabel
+							|| indirectJump == lastLabel) {
 						// Ignore the branch for all ifs but the last.
 						ignoreBranch(i, output);
 
