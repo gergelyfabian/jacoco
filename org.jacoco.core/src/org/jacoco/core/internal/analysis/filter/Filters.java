@@ -52,7 +52,7 @@ public final class Filters implements IFilter {
 				new ScalaLazyInitializerFilter(),
 				new ScalaLambdaGeneratedMethodsFilter(), new ScalaMatchFilter(),
 				new ScalaLoggingMacroFilter(), new ScalaPartialFunctionFilter(),
-				new ScalaPureConfigFilter());
+				new ScalaPureConfigFilter(), new ScalaRefEqualsFilter());
 	}
 
 	private Filters(final IFilter... filters) {
